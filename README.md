@@ -15,5 +15,5 @@ pnpm install --global web-ext
 
 - build
 ```
-web-ext build --source-dir=./src -a=./output
+./build.sh
 ```
