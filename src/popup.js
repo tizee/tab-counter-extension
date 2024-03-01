@@ -24,8 +24,32 @@ browser.windows.getAll({
     document.getElementById("allCount").innerHTML = count;
     // tab number of each host
     let htmlStr = '';
+    // sort on descending order
+    sorted_hosts = new Array(hosts.size);
+    cur_len = 0;
     hosts.forEach((val, key, map) => {
-      htmlStr += `<li><img src="${val.favIconUrl}" style="width: 1.5rem; height: 1.5rem; display: inline;"><span>${key} -> ${val.number}<span></li>`;
+      let idx = sorted_hosts.findIndex((item, idx, arr) => {
+        if (item != undefined) {
+          if (item.val.number < val.number) {
+            return true;
+          }
+        }
+        return false;
+      });
+      if (idx != -1) {
+        for (let i = cur_len; i > idx; i--) {
+          sorted_hosts[i] = sorted_hosts[i - 1];
+        }
+        sorted_hosts[idx] = {val, key};
+      } else {
+        sorted_hosts[cur_len] = {val, key};
+      }
+      cur_len++;
+    });
+
+    sorted_hosts.forEach((item, idx, arr) => {
+      htmlStr += `<li><img src="${item.val.favIconUrl}" style="width: 1.5rem; height: 1.5rem; display: inline;"><span>${item.key} -> ${item.val.number}<span></li>`;
+      // binary search
     });
     document.getElementById("hosts").innerHTML = htmlStr;
   });

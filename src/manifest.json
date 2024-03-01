@@ -2,7 +2,7 @@
   "name": "Tab Counter",
   "author": "tizee",
   "manifest_version": 2,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Displays the number of opened tabs in the current window",
   "permissions": ["tabs"],
   "background": {
