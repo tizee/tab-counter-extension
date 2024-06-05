@@ -48,8 +48,7 @@ browser.windows.getAll({
     });
 
     sorted_hosts.forEach((item, idx, arr) => {
-      htmlStr += `<li><span><img src="${item.val.favIconUrl}" style="width: 1.5rem; height: 1.5rem; display: inline;"><span>${idx + 1 }. ${item.key} -> ${item.val.number}<span></li>`;
-      // binary search
+      htmlStr += `<li><span><img src="${item.val.favIconUrl}" style="width: 1.5rem; height: 1.5rem; display: inline;"><span>${idx + 1}. ${item.key} -> ${item.val.number}<span></li>`;
     });
     document.getElementById("hosts").innerHTML = htmlStr;
   });
