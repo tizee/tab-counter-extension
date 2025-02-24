@@ -1,18 +1,9 @@
 {
   "private": "true",
   "devDependencies": {
-    "tailwindcss": "^3.4.1",
     "web-ext": "^7.5.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "serve": "vite preview"
-  },
-  "dependencies": {
-    "solid-js": "^1.8.17",
-    "unocss": "^0.60.2",
-    "vite": "^5.2.11",
-    "vite-plugin-solid": "^2.10.2"
+    "build": "make firefox"
   }
 }

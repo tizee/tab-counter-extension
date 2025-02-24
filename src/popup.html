@@ -2,11 +2,247 @@
 <html>
 <head>
   <title>Tab Counter</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --primary-color: #007AFF;
+      --background-color: #ffffff;
+      --text-color: #1c1c1e;
+      --secondary-text: #6e6e73;
+      --border-color: #e6e6e6;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background-color: #1c1c1e;
+        --text-color: #ffffff;
+        --secondary-text: #98989d;
+        --border-color: #38383A;
+      }
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    body {
+      width: 320px;
+      max-width: 320px;
+      max-height: 600px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--background-color);
+      color: var(--text-color);
+      overflow-x: hidden;
+    }
+
+    .container {
+      padding: 16px;
+      height: 100%;
+      max-height: 600px;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-shrink: 0;
+    }
+
+    .stat-box {
+      text-align: center;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--background-color);
+      border: 1px solid var(--border-color);
+      flex: 1;
+      margin: 0 8px;
+    }
+
+    .stat-number {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--secondary-text);
+      margin-top: 4px;
+    }
+
+    .hosts-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      flex-grow: 1;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    }
+
+    .hosts-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .hosts-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .hosts-list::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 6px;
+      border: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .hosts-list::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+    }
+
+    .host-item {
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .host-header {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      width: 100%;
+    }
+
+    .host-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      object-fit: contain;
+    }
+
+    .host-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .host-name {
+      font-size: 14px;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .host-count {
+      font-size: 13px;
+      color: var(--secondary-text);
+    }
+
+    .expand-icon {
+      margin-left: 12px;
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .tabs-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+      background-color: var(--background-color);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    }
+
+    .expanded .tabs-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .tabs-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .tabs-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .tabs-list::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 6px;
+      border: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .tabs-list::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+    }
+
+    .tab-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px 8px 40px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background-color 0.2s ease;
+      overflow: hidden;
+    }
+
+    .tab-item:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .tab-item:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    .tab-favicon {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      object-fit: contain;
+    }
+
+    .tab-title {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+  </style>
 </head>
 <body>
-  <h1>tabs in current window: <span id="currentCount"></span></h1>
-  <h1>total tabs: <span id="allCount"></span></h1>
-  <ul id="hosts" style="list-style: none;"></ul>
+  <div class="container">
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-number" id="currentCount">0</div>
+        <div class="stat-label">Current Window</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" id="allCount">0</div>
+        <div class="stat-label">Total Tabs</div>
+      </div>
+    </div>
+    <ul class="hosts-list" id="hosts"></ul>
+  </div>
   <script src="popup.js"></script>
 </body>
 </html>
