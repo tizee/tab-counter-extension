@@ -3,7 +3,8 @@
 function updateBadge() {
   chrome.tabs.query({ currentWindow: true }, function (tabs) {
     chrome.action.setBadgeText({ text: tabs.length.toString() });
-    chrome.action.setBadgeBackgroundColor({ color: '#007AFF' }); // Apple-style blue
+    chrome.action.setBadgeTextColor({ color: '#F5F5F5' }); // Soft white
+    chrome.action.setBadgeBackgroundColor({ color: '#DC3545' }); // Elegant red
   });
 }
 
