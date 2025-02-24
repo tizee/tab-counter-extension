@@ -36,15 +36,48 @@
       background: var(--background-color);
       color: var(--text-color);
       overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--secondary-text) transparent;
+    }
+
+    /* Custom scrollbar for webkit browsers (Chrome, Safari, newer Edge) */
+    body::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    body::-webkit-scrollbar-thumb {
+      background-color: rgba(110, 110, 115, 0.4);
+      border-radius: 6px;
+      border: none;
+    }
+
+    body::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(110, 110, 115, 0.6);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body::-webkit-scrollbar-thumb {
+        background-color: rgba(152, 152, 157, 0.4);
+      }
+      
+      body::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(152, 152, 157, 0.6);
+      }
     }
 
     .container {
       padding: 16px;
-      height: 100%;
-      max-height: 600px;
+      height: auto;
+      min-height: 100%;
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
+      scrollbar-width: none;
     }
 
     .stats {
@@ -80,31 +113,8 @@
       list-style: none;
       padding: 0;
       margin: 0;
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow: visible;
       flex-grow: 1;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-    }
-
-    .hosts-list::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .hosts-list::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .hosts-list::-webkit-scrollbar-thumb {
-      background-color: rgba(0, 0, 0, 0.2);
-      border-radius: 6px;
-      border: none;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .hosts-list::-webkit-scrollbar-thumb {
-        background-color: rgba(255, 255, 255, 0.2);
-      }
     }
 
     .host-item {
@@ -146,31 +156,20 @@
       color: var(--secondary-text);
     }
 
-    .expand-icon {
-      margin-left: 12px;
-      transition: transform 0.3s ease;
-      flex-shrink: 0;
-    }
-
-    .expanded .expand-icon {
-      transform: rotate(180deg);
-    }
-
     .tabs-list {
       list-style: none;
       padding: 0;
       margin: 0;
       max-height: 0;
       overflow: hidden;
-      transition: max-height 0.3s ease-out;
+      transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
       background-color: var(--background-color);
-      scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+      opacity: 0;
     }
 
     .expanded .tabs-list {
-      max-height: 300px;
-      overflow-y: auto;
+      max-height: none;
+      opacity: 1;
     }
 
     .tabs-list::-webkit-scrollbar {
@@ -226,6 +225,27 @@
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
+    }
+
+    .tab-status {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #34C759; /* Apple's system green color */
+      margin-right: 8px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .tab-status.active {
+      opacity: 1;
+    }
+
+    /* Optional: Add a subtle glow effect for dark mode */
+    @media (prefers-color-scheme: dark) {
+      .tab-status.active {
+        box-shadow: 0 0 6px rgba(52, 199, 89, 0.4);
+      }
     }
   </style>
 </head>

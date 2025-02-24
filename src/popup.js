@@ -1,6 +1,14 @@
 // Store tabs data globally for easy access
 let tabsByHost = new Map();
 
+// Store current window ID
+let currentWindowId;
+
+// Get current window ID when popup opens
+browser.windows.getCurrent().then(window => {
+  currentWindowId = window.id;
+});
+
 // get number of tabs in current window
 browser.tabs.query({currentWindow: true}, function (tabs) {
   document.getElementById("currentCount").innerHTML = tabs.length;
@@ -67,13 +75,11 @@ function updateHostsList(hosts) {
           <div class="host-name">${item.hostname}</div>
           <div class="host-count">${item.number} tab${item.number > 1 ? 's' : ''}</div>
         </div>
-        <svg class="expand-icon" width="12" height="12" viewBox="0 0 12 12">
-          <path fill="currentColor" d="M6 8L2 4h8l-4 4z"/>
-        </svg>
       </div>
       <ul class="tabs-list">
         ${tabs.map(tab => `
           <li class="tab-item" data-tab-id="${tab.id}">
+            <div class="tab-status ${tab.windowId === currentWindowId ? 'active' : ''}"></div>
             <img class="tab-favicon" src="${tab.favIconUrl || 'icons/icon16.png'}" alt="">
             <span class="tab-title">${tab.title}</span>
           </li>
@@ -84,7 +90,35 @@ function updateHostsList(hosts) {
     // Add click handlers
     hostElement.querySelector('.host-header').addEventListener('click', (e) => {
       e.stopPropagation();
+      const tabsList = hostElement.querySelector('.tabs-list');
+      const isExpanded = hostElement.classList.contains('expanded');
+      
+      // Toggle current item without closing others
       hostElement.classList.toggle('expanded');
+      
+      if (!isExpanded) {
+        // Expanding
+        const tabsListHeight = tabsList.scrollHeight;
+        tabsList.style.maxHeight = tabsListHeight + 'px';
+        
+        // Scroll the expanded item into view if needed
+        setTimeout(() => {
+          const hostsList = document.querySelector('.hosts-list');
+          const hostElementRect = hostElement.getBoundingClientRect();
+          const hostsListRect = hostsList.getBoundingClientRect();
+          
+          if (hostElementRect.bottom > hostsListRect.bottom) {
+            const scrollOffset = hostElementRect.bottom - hostsListRect.bottom;
+            hostsList.scrollBy({
+              top: scrollOffset + 16, // Adding some padding
+              behavior: 'smooth'
+            });
+          }
+        }, 50);
+      } else {
+        // Collapsing
+        tabsList.style.maxHeight = '0';
+      }
     });
 
     hostElement.querySelectorAll('.tab-item').forEach(tabElement => {
@@ -99,3 +133,12 @@ function updateHostsList(hosts) {
     hostsContainer.appendChild(hostElement);
   });
 }
+
+// Add this at the end of your popup.js file
+window.addEventListener('resize', () => {
+  const expandedItem = document.querySelector('.host-item.expanded');
+  if (expandedItem) {
+    const tabsList = expandedItem.querySelector('.tabs-list');
+    tabsList.style.maxHeight = tabsList.scrollHeight + 'px';
+  }
+});
