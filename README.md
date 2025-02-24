@@ -22,3 +22,7 @@ pnpm install --global web-ext
 ```
 make firefox
 ```
+
+## Firefox installation
+
+- Disable `xpinstall.signatures.required` in [about:config](about:config)
