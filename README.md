@@ -15,5 +15,5 @@ pnpm install --global web-ext
 
 - build
 ```
-./build.sh
+make firefox
 ```
