@@ -1,9 +1,19 @@
 {
-  "private": "true",
-  "devDependencies": {
-    "web-ext": "^7.5.0"
-  },
+  "name": "tab-counter-extension",
+  "version": "1.1.1",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "build": "make firefox"
+    "dev": "vite",
+    "build:chrome": "tsc && vite build --mode chrome",
+    "build:firefox": "tsc && vite build --mode firefox && web-ext build --source-dir=./dist-firefox -a=./dist --overwrite-dest",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.260",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8",
+    "web-ext": "^7.5.0"
   }
 }

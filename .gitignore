@@ -1,2 +1,5 @@
 output
-dist
+dist-chrome
+dist-firefox
+*.crx
+*.pem

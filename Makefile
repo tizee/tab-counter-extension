@@ -1,9 +1,15 @@
-.PHONY: clean
+.PHONY: clean firefox chrome install-deps
 
-all: firefox
+all: install-deps firefox chrome
+
+install-deps:
+	pnpm install
 
 firefox:
-	web-ext build --source-dir=./src -a=./dist --overwrite-dest
+	pnpm run build:firefox
+
+chrome:
+	pnpm run build:chrome
 
 clean:
-	rm -f ./output
+	rm -rf ./dist ./dist-firefox ./dist-chrome
