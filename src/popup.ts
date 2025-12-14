@@ -2,13 +2,71 @@
  * Popup script for Tab Counter extension
  * Displays tab statistics and groups tabs by host
  */
-import { browserAPI, HostData, HostDisplay } from './types';
+import { browserAPI, HostData, HostDisplay, TabTimeData, TabTimeStorage } from './types';
+
+// Storage key for tab creation times
+const TAB_TIMES_KEY = 'tabCreationTimes';
 
 // Store tabs data globally for easy access
 const tabsByHost = new Map<string, chrome.tabs.Tab[]>();
 
+// Store tab creation times
+let tabCreationTimes: TabTimeData = {};
+
 // Store current window ID
 let currentWindowId: number | undefined;
+
+/**
+ * Format a timestamp into a human-readable relative time string
+ * e.g., "5s ago", "3m 20s ago", "2h 15m ago", "1d 5h ago"
+ */
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now();
+  const diff = Math.max(0, now - timestamp);
+
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) {
+    const remainingHours = hours % 24;
+    if (remainingHours > 0) {
+      return `${days}d ${remainingHours}h ago`;
+    }
+    return `${days}d ago`;
+  }
+
+  if (hours > 0) {
+    const remainingMinutes = minutes % 60;
+    if (remainingMinutes > 0) {
+      return `${hours}h ${remainingMinutes}m ago`;
+    }
+    return `${hours}h ago`;
+  }
+
+  if (minutes > 0) {
+    const remainingSeconds = seconds % 60;
+    if (remainingSeconds > 0 && minutes < 10) {
+      return `${minutes}m ${remainingSeconds}s ago`;
+    }
+    return `${minutes}m ago`;
+  }
+
+  return `${seconds}s ago`;
+}
+
+/**
+ * Get tab creation time from storage
+ */
+async function getTabCreationTimes(): Promise<TabTimeData> {
+  try {
+    const result = await browserAPI.storage.local.get<TabTimeStorage>(TAB_TIMES_KEY);
+    return result.tabCreationTimes || {};
+  } catch {
+    return {};
+  }
+}
 
 /**
  * Initialize the popup
@@ -18,6 +76,9 @@ async function initPopup(): Promise<void> {
     // Get current window ID when popup opens
     const window = await browserAPI.windows.getCurrent();
     currentWindowId = window.id;
+
+    // Load tab creation times from storage
+    tabCreationTimes = await getTabCreationTimes();
 
     // Get number of tabs in current window
     const currentWindowTabs = await browserAPI.tabs.query({ currentWindow: true });
@@ -97,10 +158,19 @@ function updateHostsList(hosts: Map<string, HostData>): void {
       ...data
     }));
 
+  // Update host count badge
+  const hostCountElement = document.getElementById('hostCount');
+  if (hostCountElement) {
+    hostCountElement.textContent = `${sortedHosts.length} host${sortedHosts.length !== 1 ? 's' : ''}`;
+  }
+
   const hostsContainer = document.getElementById('hosts');
   if (!hostsContainer) return;
 
-  hostsContainer.innerHTML = '';
+  // Clear container using DOM method
+  while (hostsContainer.firstChild) {
+    hostsContainer.removeChild(hostsContainer.firstChild);
+  }
 
   sortedHosts.forEach(item => {
     const tabs = tabsByHost.get(item.hostname);
@@ -109,24 +179,100 @@ function updateHostsList(hosts: Map<string, HostData>): void {
     const hostElement = document.createElement('li');
     hostElement.className = 'host-item';
 
-    hostElement.innerHTML = `
-      <div class="host-header">
-        <img class="host-icon" src="${item.favIconUrl || 'icons/icon16.png'}" alt="">
-        <div class="host-info">
-          <div class="host-name">${item.hostname}</div>
-          <div class="host-count">${item.number} tab${item.number > 1 ? 's' : ''}</div>
-        </div>
-      </div>
-      <ul class="tabs-list">
-        ${tabs.map(tab => `
-          <li class="tab-item" data-tab-id="${tab.id}">
-            <div class="tab-status ${tab.windowId === currentWindowId ? 'active' : ''}"></div>
-            <img class="tab-favicon" src="${tab.favIconUrl || 'icons/icon16.png'}" alt="">
-            <span class="tab-title">${tab.title || 'Untitled'}</span>
-          </li>
-        `).join('')}
-      </ul>
-    `;
+    // Build host header
+    const hostHeader = document.createElement('div');
+    hostHeader.className = 'host-header';
+
+    const hostIcon = document.createElement('img');
+    hostIcon.className = 'host-icon';
+    hostIcon.src = item.favIconUrl || 'icons/icon16.png';
+    hostIcon.alt = '';
+
+    const hostInfo = document.createElement('div');
+    hostInfo.className = 'host-info';
+
+    const hostName = document.createElement('div');
+    hostName.className = 'host-name';
+    hostName.textContent = item.hostname;
+
+    const hostMeta = document.createElement('div');
+    hostMeta.className = 'host-meta';
+
+    const hostCount = document.createElement('span');
+    hostCount.className = 'host-count';
+    hostCount.textContent = `${item.number} tab${item.number > 1 ? 's' : ''}`;
+
+    hostMeta.appendChild(hostCount);
+    hostInfo.appendChild(hostName);
+    hostInfo.appendChild(hostMeta);
+
+    const expandIndicator = document.createElement('div');
+    expandIndicator.className = 'expand-indicator';
+    expandIndicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+
+    hostHeader.appendChild(hostIcon);
+    hostHeader.appendChild(hostInfo);
+    hostHeader.appendChild(expandIndicator);
+
+    // Build tabs list
+    const tabsList = document.createElement('ul');
+    tabsList.className = 'tabs-list';
+
+    tabs.forEach(tab => {
+      const tabItem = document.createElement('li');
+      tabItem.className = 'tab-item';
+      if (tab.id) {
+        tabItem.setAttribute('data-tab-id', tab.id.toString());
+      }
+
+      const tabStatus = document.createElement('div');
+      tabStatus.className = `tab-status${tab.windowId === currentWindowId ? ' active' : ''}`;
+
+      const tabFavicon = document.createElement('img');
+      tabFavicon.className = 'tab-favicon';
+      tabFavicon.src = tab.favIconUrl || 'icons/icon16.png';
+      tabFavicon.alt = '';
+
+      const tabContent = document.createElement('div');
+      tabContent.className = 'tab-content';
+
+      const tabTitle = document.createElement('span');
+      tabTitle.className = 'tab-title';
+      tabTitle.textContent = tab.title || 'Untitled';
+
+      const tabAge = document.createElement('span');
+      tabAge.className = 'tab-age';
+      const creationTime = tab.id ? tabCreationTimes[tab.id] : undefined;
+      tabAge.textContent = creationTime ? formatRelativeTime(creationTime) : 'just now';
+
+      tabContent.appendChild(tabTitle);
+      tabContent.appendChild(tabAge);
+
+      tabItem.appendChild(tabStatus);
+      tabItem.appendChild(tabFavicon);
+      tabItem.appendChild(tabContent);
+
+      // Add click handler for tab
+      tabItem.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const tabId = tab.id;
+        if (!tabId) return;
+
+        try {
+          await browserAPI.tabs.update(tabId, { active: true });
+          if (tab.windowId) {
+            await browserAPI.windows.update(tab.windowId, { focused: true });
+          }
+        } catch (error) {
+          console.error('Error activating tab:', error);
+        }
+      });
+
+      tabsList.appendChild(tabItem);
+    });
+
+    hostElement.appendChild(hostHeader);
+    hostElement.appendChild(tabsList);
 
     // Add click handlers
     const headerElement = hostElement.querySelector('.host-header');
@@ -168,31 +314,6 @@ function updateHostsList(hosts: Map<string, HostData>): void {
         }
       });
     }
-
-    const tabElements = hostElement.querySelectorAll('.tab-item');
-    tabElements.forEach(tabElement => {
-      tabElement.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const tabIdStr = tabElement.getAttribute('data-tab-id');
-        if (!tabIdStr) return;
-
-        const tabId = parseInt(tabIdStr, 10);
-        if (isNaN(tabId)) return;
-
-        try {
-          // Activate the tab
-          await browserAPI.tabs.update(tabId, { active: true });
-
-          // Find the tab's window and focus it
-          const tabInfo = tabs.find(t => t.id === tabId);
-          if (tabInfo && tabInfo.windowId) {
-            await browserAPI.windows.update(tabInfo.windowId, { focused: true });
-          }
-        } catch (error) {
-          console.error('Error activating tab:', error);
-        }
-      });
-    });
 
     hostsContainer.appendChild(hostElement);
   });

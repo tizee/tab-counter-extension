@@ -1,5 +1,7 @@
+node_modules
 output
 dist-chrome
 dist-firefox
 *.crx
 *.pem
+dist
